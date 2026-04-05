@@ -1,0 +1,8 @@
+{
+  "build": {
+    "builder": "heroku.buildpacks"
+  },
+  "deploy": {
+    "startCommand": "python3 data_collector.py --schedule"
+  }
+}
