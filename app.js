@@ -33,13 +33,22 @@ async function fetchProducts() {
 
         // Supabase 형식을 app.js 호환 형식으로 변환
         cachedProducts = data.map(item => ({
+            // 원본 필드
             keyword: item.keyword,
             title: item.title,
             lprice: item.lprice,
-            mallName: item.mall_name,
+            mall_name: item.mall_name,
             link: item.link,
             image: item.image,
-            collected_at: item.collected_at
+            collected_at: item.collected_at,
+
+            // UI용으로 변환된 필드
+            category: item.keyword,                    // 카테고리 = 검색 키워드
+            name: item.title,                          // 상품명
+            price: parseInt(item.lprice) || 0,         // 가격 (숫자로 변환)
+            brand: item.mall_name || 'N/A',            // 브랜드 = 쇼핑몰
+            rating: '⭐ 4.5',                          // 고정값 (네이버는 별점 미제공)
+            score: 85 + Math.random() * 15             // 점수 (랜덤 85~100)
         }));
 
         return cachedProducts;
