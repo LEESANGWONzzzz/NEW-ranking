@@ -1,18 +1,61 @@
 /**
  * app.js
  * 육아용품 랭킹 & 최저가 검색 - 동적 렌더링 로직
- * 데이터 소스: mock-data.json (구글 스프레드시트 연산 결과 가정 / 플랫 배열)
+ * 데이터 소스: Supabase PostgreSQL
  */
 
-/** 최초 1회 fetch 후 캐싱 — 검색할 때마다 재요청 방지 */
+// Supabase 클라이언트 초기화
+const SUPABASE_URL = 'https://grocmjqqtkemqihwgorm.supabase.co';
+const SUPABASE_API_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdyb2NtanFxdGtlbXFpaHdnb3JtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzOTA0MzgsImV4cCI6MjA5MDk2NjQzOH0.a-dQBJvQZs6ZMihjRAYn30kGAlyVBBY8TZvgcQ6nb4U';
+
 let cachedProducts = null;
 
+/**
+ * Supabase에서 상품 데이터 가져오기
+ */
 async function fetchProducts() {
     if (cachedProducts) return cachedProducts;
-    const response = await fetch('mock-data.json');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    cachedProducts = await response.json();
-    return cachedProducts;
+
+    try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/products?limit=500`, {
+            headers: {
+                'apikey': SUPABASE_API_KEY,
+                'Authorization': `Bearer ${SUPABASE_API_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Supabase 형식을 app.js 호환 형식으로 변환
+        cachedProducts = data.map(item => ({
+            keyword: item.keyword,
+            title: item.title,
+            lprice: item.lprice,
+            mallName: item.mall_name,
+            link: item.link,
+            image: item.image,
+            collected_at: item.collected_at
+        }));
+
+        return cachedProducts;
+    } catch (error) {
+        console.error('Supabase에서 데이터를 가져오지 못했습니다:', error);
+        // 오류 시 mock-data 폴백
+        try {
+            const response = await fetch('mock-data.json');
+            const data = await response.json();
+            cachedProducts = data;
+            return cachedProducts;
+        } catch (fallbackError) {
+            console.error('Mock 데이터도 로드 실패:', fallbackError);
+            return [];
+        }
+    }
 }
 
 // ──────────────────────────────────────────────
